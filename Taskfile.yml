@@ -1,0 +1,56 @@
+version: '3'
+
+# Reusable commands for developing/installing the Code Feedback extension.
+# Run `task --list` to see everything.
+#
+# Installed as a real .vsix (shows in the Extensions list, all windows). The
+# installed copy is independent of this source folder, so after editing the
+# code you must `task reinstall` then reload your editor windows.
+
+vars:
+  VSIX: code-feedback-0.1.0.vsix
+
+tasks:
+  package:
+    desc: Build the .vsix from source
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - npx --yes @vscode/vsce package --allow-missing-repository --skip-license
+
+  publish:
+    desc: Publish to the VS Code Marketplace (needs a publisher PAT; run `npx vsce login khanakia` first)
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - npx --yes @vscode/vsce publish
+
+  publish-ovsx:
+    desc: Publish to Open VSX (for Cursor/VSCodium users; needs `OVSX_PAT`)
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - npx --yes ovsx publish "{{.VSIX}}" -p "$OVSX_PAT"
+
+  reinstall:
+    desc: Repackage and reinstall into VS Code + Cursor (run after editing the code)
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - task: package
+      - code --install-extension "{{.VSIX}}" --force
+      - cursor --install-extension "{{.VSIX}}" --force
+      - echo ">> Installed. Reload each window (Cmd+Shift+P -> Reload Window) to apply."
+
+  uninstall:
+    desc: Remove the extension from VS Code + Cursor
+    cmds:
+      - code --uninstall-extension khanakia.code-feedback || true
+      - cursor --uninstall-extension khanakia.code-feedback || true
+
+  status:
+    desc: Show whether the extension is installed in each editor
+    cmds:
+      - 'code --list-extensions | grep -i feedback && echo "VS Code: installed" || echo "VS Code: NOT installed"'
+      - 'cursor --list-extensions | grep -i feedback && echo "Cursor: installed" || echo "Cursor: NOT installed"'
+
+  notes-file:
+    desc: Print the on-disk notes.json paths (global storage) if they exist
+    cmds:
+      - find "/Volumes/D/khanakia/.vscode" "/Volumes/D/khanakia/.cursor" -name notes.json -path "*code-feedback*" 2>/dev/null || echo "no notes.json yet"

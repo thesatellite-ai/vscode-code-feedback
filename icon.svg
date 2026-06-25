@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b2d31"/>
+      <stop offset="1" stop-color="#1b1c1f"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="26" fill="url(#bg)"/>
+  <!-- speech bubble -->
+  <path d="M30 34h68a8 8 0 0 1 8 8v36a8 8 0 0 1-8 8H58l-16 16V86H30a8 8 0 0 1-8-8V42a8 8 0 0 1 8-8z" fill="#f5c53d"/>
+  <!-- note lines -->
+  <rect x="36" y="48" width="56" height="7" rx="3.5" fill="#1b1c1f"/>
+  <rect x="36" y="62" width="40" height="7" rx="3.5" fill="#1b1c1f"/>
+</svg>

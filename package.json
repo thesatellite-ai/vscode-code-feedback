@@ -1,0 +1,56 @@
+{
+  "name": "code-feedback",
+  "displayName": "Code Feedback",
+  "description": "Select lines, add a feedback note with #tags, track Open/Resolved, filter live, and copy the open notes as one markdown list to paste into any AI agent.",
+  "version": "0.1.0",
+  "publisher": "khanakia",
+  "license": "MIT",
+  "icon": "icon.png",
+  "engines": { "vscode": "^1.75.0" },
+  "categories": ["Other", "Visualization"],
+  "keywords": ["notes", "feedback", "code review", "comments", "annotations", "ai", "todo", "tags"],
+  "galleryBanner": { "color": "#1b1c1f", "theme": "dark" },
+  "repository": { "type": "git", "url": "https://github.com/thesatellite-ai/vscode-code-feedback.git" },
+  "bugs": { "url": "https://github.com/thesatellite-ai/vscode-code-feedback/issues" },
+  "homepage": "https://github.com/thesatellite-ai/vscode-code-feedback#readme",
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "codeFeedback.addNote", "title": "Code Feedback: Add Note from Selection", "icon": "$(add)" },
+      { "command": "codeFeedback.copyAll", "title": "Code Feedback: Copy Open Notes (this project)", "icon": "$(copy)" },
+      { "command": "codeFeedback.copyAllIncludingResolved", "title": "Code Feedback: Copy All incl. Resolved (this project)" },
+      { "command": "codeFeedback.previewAll", "title": "Code Feedback: Preview All Notes (all projects)", "icon": "$(eye)" },
+      { "command": "codeFeedback.clearResolved", "title": "Code Feedback: Clear Resolved (this project)" },
+      { "command": "codeFeedback.clearAll", "title": "Code Feedback: Clear All (this project)", "icon": "$(trash)" },
+      { "command": "codeFeedback.clearAllProjects", "title": "Code Feedback: Clear All Notes (all projects)" }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        { "id": "codeFeedback", "title": "Code Feedback", "icon": "$(comment-discussion)" }
+      ]
+    },
+    "views": {
+      "codeFeedback": [
+        { "type": "webview", "id": "codeFeedbackView", "name": "Notes" }
+      ]
+    },
+    "menus": {
+      "editor/context": [
+        { "command": "codeFeedback.addNote", "group": "codeFeedback@1", "when": "editorTextFocus" }
+      ],
+      "view/title": [
+        { "command": "codeFeedback.copyAll", "when": "view == codeFeedbackView", "group": "navigation@1" },
+        { "command": "codeFeedback.previewAll", "when": "view == codeFeedbackView", "group": "navigation@2" },
+        { "command": "codeFeedback.copyAllIncludingResolved", "when": "view == codeFeedbackView", "group": "1_copy@1" },
+        { "command": "codeFeedback.clearResolved", "when": "view == codeFeedbackView", "group": "2_clear@1" },
+        { "command": "codeFeedback.clearAll", "when": "view == codeFeedbackView", "group": "2_clear@2" },
+        { "command": "codeFeedback.clearAllProjects", "when": "view == codeFeedbackView", "group": "2_clear@3" }
+      ]
+    },
+    "keybindings": [
+      { "command": "codeFeedback.addNote", "key": "ctrl+alt+n", "mac": "cmd+alt+n", "when": "editorTextFocus" },
+      { "command": "codeFeedback.copyAll", "key": "ctrl+alt+c", "mac": "cmd+alt+c" }
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+node_modules/
+*.vsix
+*.log
+.DS_Store
+_gethtml.js
+# BEGIN repolink (managed — do not edit)
+/CLAUDE.md
+/docsi
+# END repolink
