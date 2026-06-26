@@ -1,9 +1,9 @@
 name: CI
 
+# Manual only — run from the Actions tab (or `gh workflow run ci.yml`) to avoid
+# spending Actions minutes on every push.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
