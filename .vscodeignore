@@ -24,6 +24,7 @@ brand/png/favicon-32.png
 brand/png/favicon-48.png
 brand/png/og-cover.png
 brand/png/og-cover-light.png
+brand/png/og-social-1280.png
 tsconfig.json
 .oxlintrc.json
 pnpm-lock.yaml
