@@ -1,0 +1,21 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Code Feedback — review-comment notes for your code, copied to your AI agent">
+  <defs>
+    <linearGradient id="og-bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse"><stop stop-color="#1E293B"/><stop offset="1" stop-color="#020617"/></linearGradient>
+    <linearGradient id="og-icon" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse"><stop stop-color="#1E293B"/><stop offset="1" stop-color="#020617"/></linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#og-bg)"/>
+  <g transform="translate(96,170) scale(0.52)">
+    <rect width="512" height="512" rx="112" fill="url(#og-icon)"/>
+    <path d="M150 120 H362 a48 48 0 0 1 48 48 V274 a48 48 0 0 1 -48 48 H242 l-46 52 v-52 H150 a48 48 0 0 1 -48 -48 V168 a48 48 0 0 1 48 -48 Z" fill="none" stroke="#FFFFFF" stroke-opacity="0.32" stroke-width="6"/>
+  <circle cx="158" cy="178" r="13" fill="#F5C53D"/>
+  <g fill="#FFFFFF">
+    <rect x="190" y="164" width="150" height="28" rx="14"/>
+    <rect x="158" y="208" width="196" height="28" rx="14"/>
+    <rect x="190" y="252" width="120" height="28" rx="14"/>
+  </g>
+  </g>
+  <text x="412" y="282" font-family="'Space Grotesk', 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="96" font-weight="600" letter-spacing="-4" fill="#FFFFFF">Code <tspan fill="#F5C53D">Feedback</tspan></text>
+  <rect x="416" y="314" width="86" height="8" rx="4" fill="#F5C53D"/>
+  <text x="414" y="386" font-family="'Space Grotesk', 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="38" font-weight="500" fill="#E2E8F0">Leave review notes on code lines.</text>
+  <text x="414" y="440" font-family="'Space Grotesk', 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="28" font-weight="400" fill="#94A3B8">Copy them to your AI agent · VS Code &amp; Cursor · open source.</text>
+</svg>

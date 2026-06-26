@@ -1,0 +1,69 @@
+{
+  "$meta": {
+    "name": "code-feedback",
+    "concept": "comment + marker",
+    "brand": "amber/gold",
+    "generated_by": "gen-brand.mjs"
+  },
+  "amber": {
+    "50": "#FFFBEB",
+    "100": "#FEF3C7",
+    "200": "#FDE68A",
+    "300": "#FCD34D",
+    "400": "#FBBF24",
+    "500": "#F59E0B",
+    "600": "#D97706",
+    "700": "#B45309",
+    "800": "#92400E",
+    "900": "#78350F",
+    "950": "#451A03"
+  },
+  "gold": {
+    "400": "#F5C53D"
+  },
+  "slate": {
+    "50": "#F8FAFC",
+    "100": "#F1F5F9",
+    "200": "#E2E8F0",
+    "300": "#CBD5E1",
+    "400": "#94A3B8",
+    "500": "#64748B",
+    "600": "#475569",
+    "700": "#334155",
+    "800": "#1E293B",
+    "900": "#0F172A",
+    "950": "#020617"
+  },
+  "neutral": {
+    "100": "#F4F4F5",
+    "300": "#D4D4D8",
+    "500": "#71717A",
+    "700": "#3F3F46",
+    "900": "#18181B",
+    "ink": "#0B0B12",
+    "white": "#FFFFFF"
+  },
+  "accent": "#F5C53D",
+  "semantic": {
+    "light": {
+      "bg": "#FFFFFF",
+      "surface": "#FFFBEB",
+      "text": "#0F172A",
+      "muted": "#475569",
+      "brand": "#D97706",
+      "brandStrong": "#B45309",
+      "accent": "#F59E0B",
+      "border": "#FEF3C7"
+    },
+    "dark": {
+      "bg": "#020617",
+      "surface": "#0F172A",
+      "text": "#F8FAFC",
+      "muted": "#94A3B8",
+      "brand": "#FBBF24",
+      "brandStrong": "#F5C53D",
+      "accent": "#F5C53D",
+      "border": "#1E293B"
+    }
+  }
+}

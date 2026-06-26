@@ -1,10 +1,48 @@
+<div align="center">
+
+<img src="brand/png/cf-icon-512.png" width="104" alt="Code Feedback" />
+
 # Code Feedback
 
-> Leave review-comment-style notes on code lines, track them as Open/Resolved, then copy the open ones as one clean markdown list to paste into your AI agent.
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/khanakia.code-feedback?label=Marketplace&logo=visualstudiocode&color=007ACC)](https://marketplace.visualstudio.com/items?itemName=khanakia.code-feedback)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/khanakia.code-feedback?label=installs&color=4c1)](https://marketplace.visualstudio.com/items?itemName=khanakia.code-feedback)
+[![Downloads](https://img.shields.io/visual-studio-marketplace/d/khanakia.code-feedback?label=downloads&color=4c1)](https://marketplace.visualstudio.com/items?itemName=khanakia.code-feedback)
+[![Rating](https://img.shields.io/visual-studio-marketplace/r/khanakia.code-feedback?label=rating)](https://marketplace.visualstudio.com/items?itemName=khanakia.code-feedback&ssr=false#review-details)
+[![Open VSX](https://img.shields.io/open-vsx/v/khanakia/code-feedback?label=Open%20VSX&color=a60ee5)](https://open-vsx.org/extension/khanakia/code-feedback)
+[![Open VSX Downloads](https://img.shields.io/open-vsx/dt/khanakia/code-feedback?label=OVSX%20downloads)](https://open-vsx.org/extension/khanakia/code-feedback)
+[![CI](https://github.com/thesatellite-ai/vscode-code-feedback/actions/workflows/ci.yml/badge.svg)](https://github.com/thesatellite-ai/vscode-code-feedback/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/tag/thesatellite-ai/vscode-code-feedback?sort=semver&label=release)](https://github.com/thesatellite-ai/vscode-code-feedback/tags)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![VS Code](https://img.shields.io/badge/VS%20Code-%5E1.75-007ACC?logo=visualstudiocode&logoColor=white)
+![Cursor](https://img.shields.io/badge/Cursor-compatible-000?logo=cursor&logoColor=white)
+![Zero deps](https://img.shields.io/badge/runtime%20deps-0-success)
 
-Code Feedback turns the loop of "review code → jot what's wrong → hand it to an AI" into something native to your editor. Select lines, write a note (with `#tags`), and it lands in a sidebar that works like local PR review comments. When you're ready, one shortcut copies every open note — `file:line` + your comment + the code snippet — straight to your clipboard for Claude Code, Cursor, Copilot, or any agent.
+**Leave review-comment notes on code lines, track them as Open/Resolved, then copy the open ones as one clean markdown list — `file:line` + comment + snippet — to paste straight into Claude Code, Cursor, or Copilot.**
 
-No files are modified. Notes live outside your code, persisted per project, and survive reloads and restarts.
+</div>
+
+Code Feedback turns the loop of "review code → jot what's wrong → hand it to an AI" into something native to your editor. Select lines, write a note (with `#tags`), and it lands in a sidebar that works like local PR review comments. When you're ready, one shortcut copies every open note straight to your clipboard. No files are modified — notes live outside your code, persisted per project, and survive reloads and restarts.
+
+## Why
+
+You're reviewing a PR, reading an unfamiliar codebase, or scoping a refactor, and you keep spotting things — a bug here, a naming nit there, "this needs a test," "handle the empty case." **Capturing that feedback is the annoying part:**
+
+- Scatter `// TODO` / `// FIXME` comments and you pollute the source, churn the diff, and have to hunt them all down to remove later.
+- Keep it in your head and you forget half of it by the time you're done reading.
+- Alt-tab to a notes app and you lose the one thing that matters — *which file, which line.*
+- Then, to hand the list to an AI agent, you **retype every location by hand.**
+
+Code Feedback collapses that whole loop. Mark lines in place (zero edits to your code), and each note is captured with the exact `file:line` and the code snippet. Keep going across files — the list grows in a sidebar. One shortcut (`Cmd/Ctrl+Alt+C`) copies every **open** note as clean markdown your agent can act on directly. As the agent fixes things, click **✓** to resolve them — they drop out of the next copy, so you always send only what's left. It's PR-review comments for your own workflow, built for the hand-off to an AI.
+
+```text
+You, reading code:                          One keystroke later, in your agent:
+  ┌─ src/pay.go:42 ── ● needs idempotency      ## Feedback notes
+  │  ┌─ web/cart.tsx:88 ─ ● empty-cart crash    1. `src/pay.go:42-45`  #bug
+  │  │  ┌─ api/auth.ts:12 ─ ● spoofable header     > needs idempotency key
+  └──┴──┴───────────────────────────────►       2. `web/cart.tsx:88`
+        select · note · #tag · resolve             > empty-cart case crashes …
+```
 
 ## Features
 

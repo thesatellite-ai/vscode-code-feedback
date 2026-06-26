@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "publisher": "khanakia",
   "license": "MIT",
-  "icon": "icon.png",
+  "icon": "brand/png/cf-icon-512.png",
   "engines": { "vscode": "^1.75.0" },
   "categories": ["Other", "Visualization"],
   "keywords": ["notes", "feedback", "code review", "comments", "annotations", "ai", "todo", "tags"],

@@ -6,6 +6,24 @@
 **/.DS_Store
 src/**
 node_modules/**
+# brand/ is the icon source of truth; the vsix only needs the marketplace icon
+# (brand/png/cf-icon-512.png, referenced by package.json "icon"). Ship just that
+# one file — everything else here is dev/source, not runtime.
+brand/*.svg
+brand/*.json
+brand/*.css
+brand/*.mjs
+brand/*.ico
+brand/*.yml
+brand/README.md
+brand/png/apple-touch-icon.png
+brand/png/cf-icon-128.png
+brand/png/cf-icon-1024.png
+brand/png/favicon-16.png
+brand/png/favicon-32.png
+brand/png/favicon-48.png
+brand/png/og-cover.png
+brand/png/og-cover-light.png
 tsconfig.json
 .oxlintrc.json
 pnpm-lock.yaml
