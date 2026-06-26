@@ -20,6 +20,8 @@
 
 **Leave review-comment notes on code lines, track them as Open/Resolved, then copy the open ones as one clean markdown list — `file:line` + comment + snippet — to paste straight into Claude Code, Cursor, or Copilot.**
 
+<img src="media/screenshots/hero.png" alt="Code Feedback in VS Code — the notes panel beside a Go file with a noted line highlighted in the gutter" width="900" />
+
 </div>
 
 Code Feedback turns the loop of "review code → jot what's wrong → hand it to an AI" into something native to your editor. Select lines, write a note (with `#tags`), and it lands in a sidebar that works like local PR review comments. When you're ready, one shortcut copies every open note straight to your clipboard. No files are modified — notes live outside your code, persisted per project, and survive reloads and restarts.
@@ -54,9 +56,13 @@ You, reading code:                          One keystroke later, in your agent:
 - **This file only** — one toggle scopes the list to the file you're viewing, and follows you across tabs.
 - **In-editor markers** — every noted line gets a gutter dot, a highlight, and an overview-ruler tick (yellow = open, grey = resolved), with the note on hover.
 - **Copy for your agent** — open notes (or all, with resolved marked) formatted as a markdown list. Click a note to jump back and select the lines.
-- **Across projects** — Preview All gathers notes from every project into one read-only doc.
+- **Across projects** — the eye icon previews **this project**; the ⋯ overflow has **Preview All** to gather every project's notes into one read-only doc.
+
+<img src="media/screenshots/03-gutter.png" alt="The sidebar showing Open and Resolved groups next to the editor, where noted lines have gutter dots and a hovered line shows the note in a tooltip" width="820" />
 
 ## Workflow
+
+<img src="media/screenshots/02-add-note.png" alt="Selecting lines in a Go file and adding a note — the input box shows the note text with a #bug tag and the captured file:line range" width="660" />
 
 1. Select one or more lines (or just place the cursor on a line).
 2. Right-click → **Code Feedback: Add Note from Selection** (or press `Cmd/Ctrl+Alt+N`).
@@ -68,15 +74,21 @@ You, reading code:                          One keystroke later, in your agent:
 
 ## The sidebar
 
+<img src="media/screenshots/01-sidebar.png" alt="Code Feedback sidebar — notes grouped under Open, each with a short ID, the note text, file:line, and tags; a filter box and tag chips on top" width="660" />
+
 A live **filter box** at the top, a row of **tag chips**, then notes grouped into collapsible **Open** and **Resolved** sections.
 
 - **Filter** — type to narrow. Words match file path / note / snippet; `#tag` tokens filter by tag (e.g. `auth #bug`). Typing `#` shows an autocomplete dropdown of your existing tags.
 - **Tag chips** — click a tag to filter by it (highlighted when active); click again to release.
 - **Per note** (on hover): **✓ resolve** / **↺ reopen**, **edit** (text + tags), **delete**. Click the note body to reveal and select the lines.
 
+<img src="media/screenshots/04-filter.png" alt="Filtering the notes list by typing text and clicking the active #bug tag chip, narrowing to one matching note" width="420" />
+
 ## Icons & controls
 
-Every control in the extension, what it is, and what it does. (Hover any title-bar icon in the editor to see its tooltip — set `workbench.hover.delay` to `0` if you want them instant.)
+<img src="media/screenshots/07-titlebar.png" alt="The Code Feedback panel title bar with its icons and a tooltip reading Show Notes for Current File Only" width="520" />
+
+Every control in the extension, what it is, and what it does. (Hover any title-bar icon to see its tooltip — set `workbench.hover.delay` to `0` if you want them instant.)
 
 ### Panel title bar (top of the Code Feedback view)
 
@@ -85,8 +97,8 @@ Every control in the extension, what it is, and what it does. (Hover any title-b
 | <img src="media/icons/files.png" width="16" alt="files"> / <img src="media/icons/file.png" width="16" alt="file"> | Show notes for current file only — toggle | Stacked-files icon = showing **all** files; click to scope the list to the file you're viewing. It then becomes a single-file icon; click again to show all. Follows you as you switch tabs. |
 | <img src="media/icons/copy.png" width="16" alt="copy"> | Copy Open Notes | Copies all **open** notes in this project to the clipboard as markdown, ready to paste into an AI agent. Respects the active filter. (`Cmd/Ctrl+Alt+C`) |
 | <img src="media/icons/check-all.png" width="16" alt="check-all"> | Resolve by ID | Opens a box — paste a list of note IDs (one per line, or any separator) and click **Resolve** to bulk-close them. |
-| <img src="media/icons/eye.png" width="16" alt="eye"> | Preview All Notes (all projects) | Opens a read-only markdown doc with every note from every project, grouped by project. |
-| <img src="media/icons/ellipsis.png" width="16" alt="more"> | Overflow menu | **Copy All incl. Resolved** · **Clear Resolved (this project)** · **Clear All (this project)** · **Clear All Notes (all projects)**. Clears ask for confirmation first. |
+| <img src="media/icons/eye.png" width="16" alt="eye"> | Preview Notes (this project) | Opens a read-only markdown doc of **this project's** notes. |
+| <img src="media/icons/ellipsis.png" width="16" alt="more"> | Overflow menu | **Preview All Notes (all projects)** · **Copy All incl. Resolved** · **Clear Resolved (this project)** · **Clear All (this project)** · **Clear All Notes (all projects)**. Clears ask for confirmation first. |
 
 ### Inside the panel
 
@@ -140,7 +152,11 @@ Every control in the extension, what it is, and what it does. (Hover any title-b
    ```
 ```
 
+<img src="media/screenshots/05-copy.png" alt="The notes pasted as markdown — each entry leads with its [id] and file:line, then the note and the code snippet (shown via Preview All, grouped by project)" width="720" />
+
 Each note leads with a short `[id]`. After your agent works through the list, ask it for the IDs it completed, then click the title-bar **✓✓ Resolve by ID** button — paste them one per line and click **Resolve** to close them all in bulk.
+
+<img src="media/screenshots/06-resolve-by-id.png" alt="The Resolve by ID box open with two note IDs pasted, ready to bulk-resolve them" width="420" />
 
 ## Keybindings
 

@@ -51,6 +51,7 @@ const CMD = {
   ADD_NOTE: "codeFeedback.addNote",
   COPY_ALL: "codeFeedback.copyAll",
   COPY_ALL_RESOLVED: "codeFeedback.copyAllIncludingResolved",
+  PREVIEW_PROJECT: "codeFeedback.previewProject",
   PREVIEW_ALL: "codeFeedback.previewAll",
   RESOLVE_BY_IDS: "codeFeedback.resolveByIds",
   // Two ids share one toggle handler so the title-bar icon can reflect on/off
@@ -264,13 +265,13 @@ export function activate(ctx: vscode.ExtensionContext): void {
   console.log(`[Code Feedback] notes stored at ${storageFile} (${notes.length} loaded)`);
 
   // "This file only" scope. Owned here (not in the webview) so the title-bar
-  // toggle command can drive it; persisted in globalState; mirrored to a context
-  // key so the toolbar shows the on/off icon.
+  // toggle command can drive it; mirrored to a context key so the toolbar shows
+  // the on/off icon. Defaults to OFF (show ALL files) and is NOT persisted — it's
+  // a momentary scope, so every session starts showing all files.
   const FILE_ONLY_KEY = "codeFeedback.fileOnly";
-  let fileOnly = ctx.globalState.get<boolean>(FILE_ONLY_KEY, false);
+  let fileOnly = false;
   const setFileOnly = (v: boolean): void => {
     fileOnly = v;
-    void ctx.globalState.update(FILE_ONLY_KEY, v);
     void vscode.commands.executeCommand("setContext", FILE_ONLY_KEY, v);
     postState();
   };
@@ -438,8 +439,8 @@ export function activate(ctx: vscode.ExtensionContext): void {
     if (!tokens.length) return;
     const wanted = new Set(tokens);
     const byRef = new Map(notes.map((n) => [n.ref.toLowerCase(), n]));
-    let resolved = 0;
-    let alreadyClosed = 0;
+    const resolvedRefs: string[] = [];
+    const alreadyRefs: string[] = [];
     const unknown: string[] = [];
     for (const ref of wanted) {
       const n = byRef.get(ref);
@@ -447,17 +448,19 @@ export function activate(ctx: vscode.ExtensionContext): void {
         unknown.push(ref);
       } else if (isOpen(n)) {
         n.status = STATUS_RESOLVED;
-        resolved++;
+        resolvedRefs.push(ref);
       } else {
-        alreadyClosed++;
+        alreadyRefs.push(ref);
       }
     }
-    if (resolved) {
+    if (resolvedRefs.length) {
       save();
       refresh();
     }
-    const parts = [`resolved ${resolved}`];
-    if (alreadyClosed) parts.push(`${alreadyClosed} already resolved`);
+    // Name the refs explicitly — resolve is global (refs are store-unique), so a
+    // ref in another project resolves there and won't visibly move in this view.
+    const parts = [`resolved ${resolvedRefs.length}${resolvedRefs.length ? ` (${resolvedRefs.join(", ")})` : ""}`];
+    if (alreadyRefs.length) parts.push(`already resolved: ${alreadyRefs.join(", ")}`);
     if (unknown.length) parts.push(`unknown: ${unknown.join(", ")}`);
     vscode.window.showInformationMessage(`Code Feedback: ${parts.join(" · ")}.`);
   };
@@ -584,6 +587,27 @@ export function activate(ctx: vscode.ExtensionContext): void {
     vscode.window.showInformationMessage(`Code Feedback: copied ${list.length} note(s).`);
   };
 
+  // Preview just the CURRENT project's notes (the title-bar eye). Keeps the refs
+  // scoped to one project so what you copy/paste back lines up with this sidebar.
+  const previewProject = async (): Promise<void> => {
+    const list = projectNotes();
+    if (!list.length) {
+      vscode.window.showInformationMessage("Code Feedback: no notes in this project.");
+      return;
+    }
+    const { label } = currentWs();
+    const open = list.filter(isOpen).length;
+    const content = [
+      `# Code Feedback — ${label} (${list.length} note(s), ${open} open)`,
+      "",
+      formatList(list, { markResolved: true }),
+    ].join("\n");
+    const doc = await vscode.workspace.openTextDocument({ content, language: "markdown" });
+    await vscode.window.showTextDocument(doc, { preview: true });
+  };
+
+  // Preview EVERY project's notes (moved to the overflow menu — using this and
+  // copying a ref from another project is what caused the "it didn't resolve" confusion).
   const previewAll = async (): Promise<void> => {
     if (!notes.length) {
       vscode.window.showInformationMessage("Code Feedback: no notes anywhere yet.");
@@ -671,6 +695,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(CMD.ADD_NOTE, addNote),
     vscode.commands.registerCommand(CMD.COPY_ALL, copyAll),
     vscode.commands.registerCommand(CMD.COPY_ALL_RESOLVED, copyAllIncludingResolved),
+    vscode.commands.registerCommand(CMD.PREVIEW_PROJECT, previewProject),
     vscode.commands.registerCommand(CMD.PREVIEW_ALL, previewAll),
     vscode.commands.registerCommand(CMD.RESOLVE_BY_IDS, openResolveByIds),
     vscode.commands.registerCommand(CMD.TOGGLE_FILE_ONLY, () => setFileOnly(!fileOnly)),
@@ -724,6 +749,9 @@ function getHtml(): string {
     border: 1px solid var(--vscode-input-border, transparent); border-radius: 2px; outline: none; }
   #filter:focus { border-color: var(--vscode-focusBorder); }
   #chips { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; }
+  .clearbtn { all: unset; cursor: pointer; font-size: 11px; opacity: .7; margin-top: 6px; display: inline-block;
+    color: var(--vscode-textLink-foreground); }
+  .clearbtn:hover { opacity: 1; text-decoration: underline; }
 
   /* resolve-by-ID panel */
   #resolvePanel { margin-top: 6px; }
@@ -784,6 +812,7 @@ function getHtml(): string {
     <input id="filter" type="text" placeholder="Filter… text or #tag" list="tagDatalist" autocomplete="off" />
     <datalist id="tagDatalist"></datalist>
     <div id="chips"></div>
+    <button id="clearFilters" class="clearbtn" hidden>✕ Clear filter</button>
     <div id="resolvePanel" hidden>
       <textarea id="resolveInput" placeholder="Paste note IDs — one per line (or any separator). e.g. a3f9"></textarea>
       <div class="resolveBtns">
@@ -867,6 +896,7 @@ function getHtml(): string {
   }
 
   function render() {
+    $("clearFilters").hidden = !(filterText.trim() || activeTags.size);
     const filtered = data.notes.filter(matches);
     const open = filtered.filter((n) => n.open);
     const resolved = filtered.filter((n) => !n.open);
@@ -902,6 +932,9 @@ function getHtml(): string {
   });
 
   $("filter").addEventListener("input", (e) => { filterText = e.target.value; render(); });
+  $("clearFilters").addEventListener("click", () => {
+    filterText = ""; $("filter").value = ""; activeTags.clear(); renderChips(); render();
+  });
 
   // Resolve-by-ID panel — opened from the title-bar ✓✓ command (MSG.OPEN_RESOLVE).
   function showResolve(show) {
