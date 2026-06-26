@@ -6,6 +6,7 @@
 **/.DS_Store
 src/**
 node_modules/**
+media/**
 # brand/ is the icon source of truth; the vsix only needs the marketplace icon
 # (brand/png/cf-icon-512.png, referenced by package.json "icon"). Ship just that
 # one file — everything else here is dev/source, not runtime.

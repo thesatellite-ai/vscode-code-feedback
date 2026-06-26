@@ -48,6 +48,7 @@ You, reading code:                          One keystroke later, in your agent:
 
 - **Note on any selection** — `Cmd/Ctrl+Alt+N` captures the file path, line range, and code snippet.
 - **Open / Resolved tracking** — resolve notes as the agent fixes them; they collapse into a Resolved group and drop out of the next copy.
+- **Short note IDs + bulk resolve** — every note has a short `[id]` shown in the copied markdown. Ask your agent which IDs it finished, paste the list into **Resolve by ID**, and they all close at once.
 - **Inline live filter** — a search box in the panel narrows as you type; match text or `#tags`, with tag autocomplete.
 - **Tag chips** — every tag in the project shows as a clickable chip to toggle as a filter.
 - **This file only** — one toggle scopes the list to the file you're viewing, and follows you across tabs.
@@ -67,21 +68,62 @@ You, reading code:                          One keystroke later, in your agent:
 
 ## The sidebar
 
-A live **filter box** at the top, a **This file only** toggle, a row of **tag chips**, then notes grouped into collapsible **Open** and **Resolved** sections.
+A live **filter box** at the top, a row of **tag chips**, then notes grouped into collapsible **Open** and **Resolved** sections.
 
 - **Filter** — type to narrow. Words match file path / note / snippet; `#tag` tokens filter by tag (e.g. `auth #bug`). Typing `#` shows an autocomplete dropdown of your existing tags.
 - **Tag chips** — click a tag to filter by it (highlighted when active); click again to release.
-- **This file only** — scopes the list to the active editor's file and updates as you switch tabs.
 - **Per note** (on hover): **✓ resolve** / **↺ reopen**, **edit** (text + tags), **delete**. Click the note body to reveal and select the lines.
 
-Title bar: **Copy Open Notes**, **Preview All Notes**, and an overflow `…` with **Copy All incl. Resolved**, **Clear Resolved**, **Clear All (this project)**, and **Clear All (all projects)**. Destructive actions ask first.
+## Icons & controls
+
+Every control in the extension, what it is, and what it does. (Hover any title-bar icon in the editor to see its tooltip — set `workbench.hover.delay` to `0` if you want them instant.)
+
+### Panel title bar (top of the Code Feedback view)
+
+| Icon | Action | What it does |
+|---|---|---|
+| <img src="media/icons/files.png" width="16" alt="files"> / <img src="media/icons/file.png" width="16" alt="file"> | Show notes for current file only — toggle | Stacked-files icon = showing **all** files; click to scope the list to the file you're viewing. It then becomes a single-file icon; click again to show all. Follows you as you switch tabs. |
+| <img src="media/icons/copy.png" width="16" alt="copy"> | Copy Open Notes | Copies all **open** notes in this project to the clipboard as markdown, ready to paste into an AI agent. Respects the active filter. (`Cmd/Ctrl+Alt+C`) |
+| <img src="media/icons/check-all.png" width="16" alt="check-all"> | Resolve by ID | Opens a box — paste a list of note IDs (one per line, or any separator) and click **Resolve** to bulk-close them. |
+| <img src="media/icons/eye.png" width="16" alt="eye"> | Preview All Notes (all projects) | Opens a read-only markdown doc with every note from every project, grouped by project. |
+| <img src="media/icons/ellipsis.png" width="16" alt="more"> | Overflow menu | **Copy All incl. Resolved** · **Clear Resolved (this project)** · **Clear All (this project)** · **Clear All Notes (all projects)**. Clears ask for confirmation first. |
+
+### Inside the panel
+
+| Element | What it does |
+|---|---|
+| **Filter box** | Live-narrows the list as you type. Words match file path / note / snippet; `#tag` tokens filter by tag. Typing `#` shows a tag autocomplete dropdown. |
+| **Tag chips** | One per tag in the project. Click to filter by that tag (highlighted when active); click again to release. |
+| **`▸` / `▾` group headers** | Collapse / expand the **Open** and **Resolved** groups. State is remembered. |
+| **`a3f9`** (mono, left of each note) | The note's short **ID** — also shown in the copied markdown as `[a3f9]`. Use it with **Resolve by ID**. |
+| **● dot** (left of a note row) | Status: amber = open, grey = resolved. |
+
+### On a note row (appear on hover, right side)
+
+| Icon | Action |
+|---|---|
+| **✓** | Resolve the note (open notes only) |
+| **↺** | Reopen the note (resolved notes only) |
+| **✎** | Edit the note text + `#tags` |
+| **✕** | Delete the note |
+| *(click the row body)* | Reveal the file and **select** the noted lines |
+
+### In the editor (on noted lines)
+
+| Marker | Meaning |
+|---|---|
+| **Gutter dot** — amber | An **open** note is on this line |
+| **Gutter check** — grey | A **resolved** note is on this line |
+| **Line highlight + left border** | The noted line range |
+| **Overview-ruler tick** (right scrollbar) | Jump-spot for a note anywhere in the file |
+| *(hover the line)* | Shows the note text |
 
 ## What gets copied
 
 ```markdown
 ## Feedback notes
 
-1. `api/pay.go:42-45`  #bug #api
+1. `[a3f9]` `api/pay.go:42-45`  #bug #api
    > needs idempotency key — duplicate charges possible
 
    ```go
@@ -90,13 +132,15 @@ Title bar: **Copy Open Notes**, **Preview All Notes**, and an overflow `…` wit
    }
    ```
 
-2. `web/cart.tsx:88`
+2. `[k7m2]` `web/cart.tsx:88`
    > empty-cart case not handled, crashes
 
    ```tsx
    const total = items.reduce(...)
    ```
 ```
+
+Each note leads with a short `[id]`. After your agent works through the list, ask it for the IDs it completed, then click the title-bar **✓✓ Resolve by ID** button — paste them one per line and click **Resolve** to close them all in bulk.
 
 ## Keybindings
 

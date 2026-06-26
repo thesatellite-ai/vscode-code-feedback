@@ -2,6 +2,17 @@
 
 All notable changes to the **Code Feedback** extension are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Short note IDs + "Resolve by IDs".** Every note now has a short `[id]` (e.g. `a3f9`) shown in the copied markdown. A new panel toggle and title-bar command let you paste a list of IDs (any separator) and bulk-resolve every matching note — built for the loop where an AI agent reports back which notes it completed.
+
+### Changed
+
+- Rewritten in **TypeScript** (strict) with an `oxlint` pass; compiles to `out/extension.js`. Package manager is **pnpm**. No runtime dependencies.
+- New **brand kit** (`brand/`) and marketplace icon; README rewritten with a pitch + badges.
+
 ## [0.1.0] - 2026-06-25
 
 Initial release.

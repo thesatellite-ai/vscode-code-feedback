@@ -35,6 +35,8 @@ const MSG = {
   REOPEN: "reopen", // webview → ext: mark a note open again
   EDIT: "edit", // webview → ext: edit a note's text + tags
   DELETE: "delete", // webview → ext: delete a note
+  RESOLVE_BY_IDS: "resolveByIds", // webview → ext: bulk-resolve by pasted refs (payload.text)
+  OPEN_RESOLVE: "openResolve", // ext → webview: reveal + focus the "resolve by ID" box
 } as const;
 /** Every valid inbound/outbound message `type`. */
 type MsgType = (typeof MSG)[keyof typeof MSG];
@@ -50,6 +52,11 @@ const CMD = {
   COPY_ALL: "codeFeedback.copyAll",
   COPY_ALL_RESOLVED: "codeFeedback.copyAllIncludingResolved",
   PREVIEW_ALL: "codeFeedback.previewAll",
+  RESOLVE_BY_IDS: "codeFeedback.resolveByIds",
+  // Two ids share one toggle handler so the title-bar icon can reflect on/off
+  // state via opposite `when` clauses (VS Code can't swap a button's icon otherwise).
+  TOGGLE_FILE_ONLY: "codeFeedback.toggleFileOnly", // shown when OFF
+  TOGGLE_FILE_ONLY_ACTIVE: "codeFeedback.toggleFileOnlyActive", // shown when ON
   CLEAR_RESOLVED: "codeFeedback.clearResolved",
   CLEAR_ALL: "codeFeedback.clearAll",
   CLEAR_ALL_PROJECTS: "codeFeedback.clearAllProjects",
@@ -61,6 +68,10 @@ const CMD = {
 interface Note {
   /** Unique id `${epochMs}-${line}-${index}` (not a UUID; unique enough for one local store). */
   id: string;
+  /** Short human-pasteable code (e.g. `a3f9`), unique across the store. Shown in the
+   *  copied markdown as `[ref]` so an AI agent can report back which notes it finished;
+   *  the "Resolve by IDs" action matches against this. */
+  ref: string;
   /** Workspace key (folder uri string) the note belongs to; `"__none__"` when no folder is open. */
   ws: string;
   /** Human label for the workspace (folder name) — used by Preview-All grouping. */
@@ -88,6 +99,7 @@ interface Note {
 /** The slim per-note projection sent to the webview (no `ws`/`uri`/internal fields). */
 interface WebviewNote {
   id: string;
+  ref: string;
   file: string;
   range: string;
   note: string;
@@ -102,6 +114,9 @@ interface StatePayload {
   type: typeof MSG.STATE;
   wsLabel: string;
   activeFile: string | null;
+  /** Whether the "this file only" scope is active — owned by the extension so a
+   *  title-bar command can toggle it; the webview only renders by it. */
+  fileOnly: boolean;
   notes: WebviewNote[];
   tags: string[];
 }
@@ -143,6 +158,24 @@ function nonce(): string {
   return s;
 }
 
+// Short ref alphabet: lowercase + digits, minus look-alikes (0/o, 1/l/i) so a
+// human can read a ref off the markdown and retype it without ambiguity.
+const REF_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
+const REF_LEN = 4;
+
+/** Generate a short ref not already in `existing`. Falls back to a longer code on saturation. */
+function makeRef(existing: Set<string>): string {
+  for (let attempt = 0; attempt < 2000; attempt++) {
+    let s = "";
+    for (let i = 0; i < REF_LEN; i++) s += REF_ALPHABET.charAt(Math.floor(Math.random() * REF_ALPHABET.length));
+    if (!existing.has(s)) return s;
+  }
+  // Astronomically unlikely with a 4-char space; extend rather than loop forever.
+  let s = "";
+  for (let i = 0; i < REF_LEN + 2; i++) s += REF_ALPHABET.charAt(Math.floor(Math.random() * REF_ALPHABET.length));
+  return s;
+}
+
 /**
  * Validate one raw JSON value from the store into a Note, or null if unusable.
  *
@@ -159,6 +192,7 @@ function toNote(raw: unknown): Note | null {
   const num = (v: unknown, d = 0): number => (typeof v === "number" ? v : d);
   return {
     id: r.id,
+    ref: str(r.ref),
     ws: str(r.ws),
     wsLabel: str(r.wsLabel),
     file: str(r.file),
@@ -195,6 +229,29 @@ export function activate(ctx: vscode.ExtensionContext): void {
 
   let notes: Note[] = load();
 
+  // Migrate notes that predate `ref`: assign each a unique short code once.
+  const ensureRefs = (): boolean => {
+    const refs = new Set(notes.map((n) => n.ref).filter(Boolean));
+    let changed = false;
+    for (const n of notes) {
+      if (!n.ref) {
+        n.ref = makeRef(refs);
+        refs.add(n.ref);
+        changed = true;
+      }
+    }
+    return changed;
+  };
+  if (ensureRefs()) {
+    // persist the backfilled refs so they're stable across sessions
+    try {
+      fs.mkdirSync(storageDir, { recursive: true });
+      fs.writeFileSync(storageFile, JSON.stringify(notes, null, 2), "utf8");
+    } catch {
+      /* non-fatal: refs will be regenerated next load if the write failed */
+    }
+  }
+
   const save = (): void => {
     try {
       fs.mkdirSync(storageDir, { recursive: true });
@@ -205,6 +262,18 @@ export function activate(ctx: vscode.ExtensionContext): void {
   };
 
   console.log(`[Code Feedback] notes stored at ${storageFile} (${notes.length} loaded)`);
+
+  // "This file only" scope. Owned here (not in the webview) so the title-bar
+  // toggle command can drive it; persisted in globalState; mirrored to a context
+  // key so the toolbar shows the on/off icon.
+  const FILE_ONLY_KEY = "codeFeedback.fileOnly";
+  let fileOnly = ctx.globalState.get<boolean>(FILE_ONLY_KEY, false);
+  const setFileOnly = (v: boolean): void => {
+    fileOnly = v;
+    void ctx.globalState.update(FILE_ONLY_KEY, v);
+    void vscode.commands.executeCommand("setContext", FILE_ONLY_KEY, v);
+    postState();
+  };
 
   const projectNotes = (): Note[] => {
     const { key } = currentWs();
@@ -277,9 +346,11 @@ export function activate(ctx: vscode.ExtensionContext): void {
       type: MSG.STATE,
       wsLabel: currentWs().label,
       activeFile,
+      fileOnly,
       notes: mine.map(
         (n): WebviewNote => ({
           id: n.id,
+          ref: n.ref,
           file: n.file,
           range: rangeLabel(n),
           note: n.note,
@@ -320,9 +391,10 @@ export function activate(ctx: vscode.ExtensionContext): void {
   // trust boundary (untyped postMessage), so validate before dispatching.
   const onMessage = async (raw: unknown): Promise<void> => {
     if (!raw || typeof raw !== "object") return;
-    const msg = raw as { type?: unknown; id?: unknown };
+    const msg = raw as { type?: unknown; id?: unknown; text?: unknown };
     if (typeof msg.type !== "string") return;
     const id = typeof msg.id === "string" ? msg.id : undefined;
+    const text = typeof msg.text === "string" ? msg.text : "";
     switch (msg.type as MsgType) {
       case MSG.READY:
         postState();
@@ -342,6 +414,9 @@ export function activate(ctx: vscode.ExtensionContext): void {
       case MSG.DELETE:
         deleteNote(id);
         break;
+      case MSG.RESOLVE_BY_IDS:
+        resolveByIds(text);
+        break;
     }
   };
 
@@ -352,6 +427,39 @@ export function activate(ctx: vscode.ExtensionContext): void {
     n.status = status;
     save();
     refresh();
+  };
+
+  // Bulk-resolve every note whose `ref` appears in the pasted text. Refs are
+  // unique across the whole store, so matching is global (not per-project) —
+  // you can resolve notes the agent finished regardless of which project is open.
+  // Any token that isn't a known ref is reported back so typos are visible.
+  const resolveByIds = (text: string): void => {
+    const tokens = text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    if (!tokens.length) return;
+    const wanted = new Set(tokens);
+    const byRef = new Map(notes.map((n) => [n.ref.toLowerCase(), n]));
+    let resolved = 0;
+    let alreadyClosed = 0;
+    const unknown: string[] = [];
+    for (const ref of wanted) {
+      const n = byRef.get(ref);
+      if (!n) {
+        unknown.push(ref);
+      } else if (isOpen(n)) {
+        n.status = STATUS_RESOLVED;
+        resolved++;
+      } else {
+        alreadyClosed++;
+      }
+    }
+    if (resolved) {
+      save();
+      refresh();
+    }
+    const parts = [`resolved ${resolved}`];
+    if (alreadyClosed) parts.push(`${alreadyClosed} already resolved`);
+    if (unknown.length) parts.push(`unknown: ${unknown.join(", ")}`);
+    vscode.window.showInformationMessage(`Code Feedback: ${parts.join(" · ")}.`);
   };
 
   const editNote = async (id: string | undefined): Promise<void> => {
@@ -416,6 +524,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
     const ws = currentWs();
     notes.push({
       id: `${Date.now()}-${Math.floor(start)}-${notes.length}`,
+      ref: makeRef(new Set(notes.map((n) => n.ref))),
       ws: ws.key,
       wsLabel: ws.label,
       file: vscode.workspace.asRelativePath(doc.uri),
@@ -439,7 +548,9 @@ export function activate(ctx: vscode.ExtensionContext): void {
     const lines = ["## Feedback notes", ""];
     list.forEach((n, i) => {
       const tagStr = n.tags.map((t) => "#" + t).join(" ");
-      lines.push(`${i + 1}. \`${n.file}:${rangeLabel(n)}\`${tagStr ? `  ${tagStr}` : ""}`);
+      // `[ref]` leads each entry so an agent can echo back the IDs it completed,
+      // and you paste them into "Resolve by IDs" to close them in bulk.
+      lines.push(`${i + 1}. \`[${n.ref}]\` \`${n.file}:${rangeLabel(n)}\`${tagStr ? `  ${tagStr}` : ""}`);
       const prefix = markResolved && !isOpen(n) ? "[resolved] " : "";
       if (n.note) lines.push(`   > ${prefix}${n.note}`);
       if (n.snippet) {
@@ -535,6 +646,13 @@ export function activate(ctx: vscode.ExtensionContext): void {
       "Clear Everything"
     );
 
+  // Focus the sidebar and reveal the "resolve by ID" box (title-bar command +
+  // palette entry — the same box also has an inline toggle in the panel).
+  const openResolveByIds = async (): Promise<void> => {
+    await vscode.commands.executeCommand(`${VIEW_ID}.focus`);
+    view?.webview.postMessage({ type: MSG.OPEN_RESOLVE });
+  };
+
   // ---- Register ----------------------------------------------------------
   vscode.window.onDidChangeActiveTextEditor(
     (e) => {
@@ -554,10 +672,16 @@ export function activate(ctx: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(CMD.COPY_ALL, copyAll),
     vscode.commands.registerCommand(CMD.COPY_ALL_RESOLVED, copyAllIncludingResolved),
     vscode.commands.registerCommand(CMD.PREVIEW_ALL, previewAll),
+    vscode.commands.registerCommand(CMD.RESOLVE_BY_IDS, openResolveByIds),
+    vscode.commands.registerCommand(CMD.TOGGLE_FILE_ONLY, () => setFileOnly(!fileOnly)),
+    vscode.commands.registerCommand(CMD.TOGGLE_FILE_ONLY_ACTIVE, () => setFileOnly(!fileOnly)),
     vscode.commands.registerCommand(CMD.CLEAR_RESOLVED, clearResolved),
     vscode.commands.registerCommand(CMD.CLEAR_ALL, clearAll),
     vscode.commands.registerCommand(CMD.CLEAR_ALL_PROJECTS, clearAllProjects)
   );
+
+  // Initialize the toolbar toggle icon to match persisted state.
+  void vscode.commands.executeCommand("setContext", FILE_ONLY_KEY, fileOnly);
 
   // Paint gutter marks for whatever is already open when the extension loads,
   // and whenever a document opens — so noted lines are visible by default,
@@ -599,13 +723,22 @@ function getHtml(): string {
   #filter { width: 100%; padding: 3px 6px; background: var(--vscode-input-background); color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent); border-radius: 2px; outline: none; }
   #filter:focus { border-color: var(--vscode-focusBorder); }
-  #scope { margin-top: 5px; }
-  #fileToggle { all: unset; cursor: pointer; font-size: 11px; padding: 1px 8px; border-radius: 8px;
-    border: 1px solid var(--vscode-input-border, var(--vscode-badge-background)); opacity: .7; user-select: none; }
-  #fileToggle:hover { opacity: 1; }
-  #fileToggle.active { opacity: 1; background: var(--vscode-button-background); color: var(--vscode-button-foreground);
-    border-color: var(--vscode-focusBorder); font-weight: 600; }
-  #chips { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 5px; }
+  #chips { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; }
+
+  /* resolve-by-ID panel */
+  #resolvePanel { margin-top: 6px; }
+  #resolveInput { width: 100%; resize: vertical; min-height: 52px; padding: 4px 6px;
+    font-family: var(--vscode-editor-font-family, monospace); font-size: 12px;
+    background: var(--vscode-input-background); color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, transparent); border-radius: 2px; outline: none; }
+  #resolveInput:focus { border-color: var(--vscode-focusBorder); }
+  .resolveBtns { display: flex; gap: 6px; margin-top: 5px; }
+  .resolveBtns button { all: unset; cursor: pointer; font-size: 11px; padding: 2px 10px; border-radius: 3px; }
+  #resolveApply { background: var(--vscode-button-background); color: var(--vscode-button-foreground); }
+  #resolveApply:hover { background: var(--vscode-button-hoverBackground); }
+  #resolveCancel { color: var(--vscode-descriptionForeground); }
+  #resolveCancel:hover { color: var(--vscode-foreground); }
+  .ref { font-family: var(--vscode-editor-font-family, monospace); font-size: .82em; opacity: .55; margin-right: 6px; }
   .chip { cursor: pointer; padding: 0 7px; line-height: 16px; border-radius: 8px; font-size: 11px;
     background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); opacity: .6;
     border: 1px solid transparent; user-select: none; }
@@ -650,8 +783,14 @@ function getHtml(): string {
   <div class="bar">
     <input id="filter" type="text" placeholder="Filter… text or #tag" list="tagDatalist" autocomplete="off" />
     <datalist id="tagDatalist"></datalist>
-    <div id="scope"><button id="fileToggle" title="Show only notes for the file you're viewing">This file only</button></div>
     <div id="chips"></div>
+    <div id="resolvePanel" hidden>
+      <textarea id="resolveInput" placeholder="Paste note IDs — one per line (or any separator). e.g. a3f9"></textarea>
+      <div class="resolveBtns">
+        <button id="resolveApply">Resolve</button>
+        <button id="resolveCancel">Cancel</button>
+      </div>
+    </div>
   </div>
   <div class="count" id="count"></div>
   <div id="list"></div>
@@ -662,21 +801,20 @@ function getHtml(): string {
   // so button data-act values and posted message types stay in lockstep with
   // onMessage() — no hand-duplicated "reveal"/"resolve"/… literals here.
   const MSG = ${JSON.stringify(MSG)};
-  let data = { notes: [], tags: [], wsLabel: "", activeFile: null };
+  let data = { notes: [], tags: [], wsLabel: "", activeFile: null, fileOnly: false };
   let filterText = "";
   const activeTags = new Set();
   // collapse + scope state persisted across reloads
   const persisted = vscode.getState() || {};
   const collapsed = { open: !!persisted.open, resolved: persisted.resolved !== false };
-  let fileOnly = !!persisted.fileOnly;
-  const saveState = () => vscode.setState({ ...collapsed, fileOnly });
+  const saveState = () => vscode.setState({ ...collapsed });
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
     ({ "&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;","'":"&#39;" }[c]));
 
   function matches(note) {
-    if (fileOnly && data.activeFile && note.file !== data.activeFile) return false;
+    if (data.fileOnly && data.activeFile && note.file !== data.activeFile) return false;
     for (const t of activeTags) if (!(note.tags||[]).includes(t)) return false;
     const toks = filterText.toLowerCase().split(/\\s+/).filter(Boolean);
     for (const tok of toks) {
@@ -712,8 +850,9 @@ function getHtml(): string {
                  : '<button data-act="' + MSG.REOPEN + '" title="Reopen">↺</button>') +
       '<button data-act="' + MSG.EDIT + '" title="Edit">✎</button>' +
       '<button data-act="' + MSG.DELETE + '" title="Delete">✕</button></span>';
-    return '<div class="row ' + (note.open ? "" : "resolved") + '" data-id="' + esc(note.id) + '" title="' + esc(note.note) + '\\n' + esc(note.file) + ':' + esc(note.range) + '">' +
+    return '<div class="row ' + (note.open ? "" : "resolved") + '" data-id="' + esc(note.id) + '" title="[' + esc(note.ref) + '] ' + esc(note.note) + '\\n' + esc(note.file) + ':' + esc(note.range) + '">' +
       '<span class="dot"></span>' +
+      '<span class="ref">' + esc(note.ref) + '</span>' +
       '<span class="label">' + esc(note.note || "(empty note)") + '</span>' +
       '<span class="desc">' + esc(note.file) + ':' + esc(note.range) + tags + '</span>' +
       acts + '</div>';
@@ -728,11 +867,10 @@ function getHtml(): string {
   }
 
   function render() {
-    $("fileToggle").className = fileOnly ? "active" : "";
     const filtered = data.notes.filter(matches);
     const open = filtered.filter((n) => n.open);
     const resolved = filtered.filter((n) => !n.open);
-    const scope = fileOnly && data.activeFile ? " · " + data.activeFile.split("/").pop() : "";
+    const scope = data.fileOnly && data.activeFile ? " · " + data.activeFile.split("/").pop() : "";
     $("count").textContent = data.wsLabel + scope + " — " + open.length + " open" +
       (resolved.length ? ", " + resolved.length + " resolved" : "");
 
@@ -764,15 +902,29 @@ function getHtml(): string {
   });
 
   $("filter").addEventListener("input", (e) => { filterText = e.target.value; render(); });
-  $("fileToggle").addEventListener("click", () => { fileOnly = !fileOnly; saveState(); render(); });
+
+  // Resolve-by-ID panel — opened from the title-bar ✓✓ command (MSG.OPEN_RESOLVE).
+  function showResolve(show) {
+    $("resolvePanel").hidden = !show;
+    if (show) $("resolveInput").focus();
+  }
+  $("resolveCancel").addEventListener("click", () => { $("resolveInput").value = ""; showResolve(false); });
+  $("resolveApply").addEventListener("click", () => {
+    const text = $("resolveInput").value;
+    if (text.trim()) vscode.postMessage({ type: MSG.RESOLVE_BY_IDS, text });
+    $("resolveInput").value = "";
+    showResolve(false);
+  });
 
   window.addEventListener("message", (e) => {
     const msg = e.data;
     if (msg.type === MSG.STATE) {
-      data = { notes: msg.notes, tags: msg.tags, wsLabel: msg.wsLabel, activeFile: msg.activeFile };
+      data = { notes: msg.notes, tags: msg.tags, wsLabel: msg.wsLabel, activeFile: msg.activeFile, fileOnly: msg.fileOnly };
       for (const t of [...activeTags]) if (!data.tags.includes(t)) activeTags.delete(t);
       renderChips();
       render();
+    } else if (msg.type === MSG.OPEN_RESOLVE) {
+      showResolve(true);
     }
   });
 
