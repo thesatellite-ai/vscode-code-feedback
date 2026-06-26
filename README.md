@@ -4,12 +4,12 @@
 
 # Code Feedback
 
-[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/khanakia.code-feedback?label=Marketplace&logo=visualstudiocode&color=007ACC)](https://marketplace.visualstudio.com/items?itemName=khanakia.code-feedback)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/khanakia.code-feedback?label=installs&color=4c1)](https://marketplace.visualstudio.com/items?itemName=khanakia.code-feedback)
-[![Downloads](https://img.shields.io/visual-studio-marketplace/d/khanakia.code-feedback?label=downloads&color=4c1)](https://marketplace.visualstudio.com/items?itemName=khanakia.code-feedback)
-[![Rating](https://img.shields.io/visual-studio-marketplace/r/khanakia.code-feedback?label=rating)](https://marketplace.visualstudio.com/items?itemName=khanakia.code-feedback&ssr=false#review-details)
-[![Open VSX](https://img.shields.io/open-vsx/v/khanakia/code-feedback?label=Open%20VSX&color=a60ee5)](https://open-vsx.org/extension/khanakia/code-feedback)
-[![Open VSX Downloads](https://img.shields.io/open-vsx/dt/khanakia/code-feedback?label=OVSX%20downloads)](https://open-vsx.org/extension/khanakia/code-feedback)
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/khanakia.code-feedback-notes?label=Marketplace&logo=visualstudiocode&color=007ACC)](https://marketplace.visualstudio.com/items?itemName=khanakia.code-feedback-notes)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/khanakia.code-feedback-notes?label=installs&color=4c1)](https://marketplace.visualstudio.com/items?itemName=khanakia.code-feedback-notes)
+[![Downloads](https://img.shields.io/visual-studio-marketplace/d/khanakia.code-feedback-notes?label=downloads&color=4c1)](https://marketplace.visualstudio.com/items?itemName=khanakia.code-feedback-notes)
+[![Rating](https://img.shields.io/visual-studio-marketplace/r/khanakia.code-feedback-notes?label=rating)](https://marketplace.visualstudio.com/items?itemName=khanakia.code-feedback-notes&ssr=false#review-details)
+[![Open VSX](https://img.shields.io/open-vsx/v/khanakia/code-feedback-notes?label=Open%20VSX&color=a60ee5)](https://open-vsx.org/extension/khanakia/code-feedback-notes)
+[![Open VSX Downloads](https://img.shields.io/open-vsx/dt/khanakia/code-feedback-notes?label=OVSX%20downloads)](https://open-vsx.org/extension/khanakia/code-feedback-notes)
 [![CI](https://github.com/thesatellite-ai/vscode-code-feedback/actions/workflows/ci.yml/badge.svg)](https://github.com/thesatellite-ai/vscode-code-feedback/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/tag/thesatellite-ai/vscode-code-feedback?sort=semver&label=release)](https://github.com/thesatellite-ai/vscode-code-feedback/tags)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
@@ -132,7 +132,7 @@ Every control in the extension, what it is, and what it does. (Hover any title-b
 
 ## What gets copied
 
-```markdown
+````markdown
 ## Feedback notes
 
 1. `[a3f9]` `api/pay.go:42-45`  #bug #api
@@ -150,7 +150,7 @@ Every control in the extension, what it is, and what it does. (Hover any title-b
    ```tsx
    const total = items.reduce(...)
    ```
-```
+````
 
 <img src="media/screenshots/05-copy.png" alt="The notes pasted as markdown — each entry leads with its [id] and file:line, then the note and the code snippet (shown via Preview All, grouped by project)" width="720" />
 
@@ -169,7 +169,20 @@ Rebind under **Preferences → Keyboard Shortcuts** (search "Code Feedback"). Al
 
 ## Installation
 
-**From the Marketplace** (once published): search **Code Feedback** in the Extensions view and install. Works in VS Code, Cursor, and other VS Code-compatible editors.
+**Search "Code Feedback"** in your editor's Extensions view, or install from a registry directly:
+
+- **VS Code Marketplace** → [marketplace.visualstudio.com/items?itemName=khanakia.code-feedback-notes](https://marketplace.visualstudio.com/items?itemName=khanakia.code-feedback-notes) — or `code --install-extension khanakia.code-feedback-notes`
+- **Open VSX** (Cursor / VSCodium / Gitpod) → [open-vsx.org/extension/khanakia/code-feedback-notes](https://open-vsx.org/extension/khanakia/code-feedback-notes) — or `cursor --install-extension khanakia.code-feedback-notes`
+
+**From a release (`.vsix`)** — no Marketplace account needed:
+
+1. Download the latest `code-feedback-<version>.vsix` from the [**Releases page**](https://github.com/thesatellite-ai/vscode-code-feedback/releases).
+2. In VS Code or Cursor: **Extensions** view → **⋯** → **Install from VSIX…** → pick the file. Or from the CLI:
+   ```bash
+   code   --install-extension code-feedback-notes-0.1.0.vsix
+   cursor --install-extension code-feedback-notes-0.1.0.vsix
+   ```
+3. Reload the window.
 
 **From source** (TypeScript; compiles with `tsc`, no runtime dependencies):
 
@@ -178,8 +191,8 @@ git clone https://github.com/thesatellite-ai/vscode-code-feedback.git
 cd vscode-code-feedback
 pnpm install                                                  # toolchain (TypeScript + oxlint), dev only
 pnpm dlx @vscode/vsce package --no-dependencies --allow-missing-repository --skip-license   # compiles via vscode:prepublish
-code   --install-extension code-feedback-0.1.0.vsix --force
-cursor --install-extension code-feedback-0.1.0.vsix --force   # optional, for Cursor
+code   --install-extension code-feedback-notes-0.1.0.vsix --force
+cursor --install-extension code-feedback-notes-0.1.0.vsix --force   # optional, for Cursor
 ```
 
 Then reload your editor windows. A `Taskfile.yml` wraps these as `task deps`, `task build`, `task reinstall`, `task status`, and `task uninstall` if you have [Task](https://taskfile.dev/) installed.

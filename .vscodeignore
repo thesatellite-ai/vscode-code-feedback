@@ -28,6 +28,8 @@ brand/png/og-cover-light.png
 brand/png/og-social-1280.png
 tsconfig.json
 .oxlintrc.json
+.env
+.env.example
 pnpm-lock.yaml
 out/**/*.map
 Taskfile.yml

@@ -7,8 +7,11 @@ version: '3'
 # installed copy is independent of this source folder, so after editing the
 # code you must `task reinstall` then reload your editor windows.
 
+# Tokens for publishing load from .env (git-ignored). See .env.example.
+dotenv: ['.env']
+
 vars:
-  VSIX: code-feedback-0.1.0.vsix
+  VSIX: code-feedback-notes-0.1.0.vsix
 
 tasks:
   deps:
@@ -45,16 +48,30 @@ tasks:
     cmds:
       - pnpm dlx @vscode/vsce package --no-dependencies --allow-missing-repository --skip-license
 
-  publish:
-    desc: Publish to the VS Code Marketplace (needs a publisher PAT; run `pnpm dlx @vscode/vsce login khanakia` first)
+  release:
+    desc: Build the .vsix, tag, and create a GitHub Release for the current package.json version (needs gh auth)
     dir: '{{.TASKFILE_DIR}}'
     cmds:
-      - pnpm dlx @vscode/vsce publish --no-dependencies
+      - task: package
+      - |
+        VER=$(node -p "require('./package.json').version")
+        git tag "v$VER"
+        git push origin "v$VER"
+        gh release create "v$VER" "code-feedback-notes-$VER.vsix" --title "Code Feedback v$VER" --generate-notes
+
+  publish:
+    desc: Publish to the VS Code Marketplace (uses VSCE_PAT from .env)
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - task: package
+      - pnpm dlx @vscode/vsce publish --no-dependencies -p "$VSCE_PAT"
 
   publish-ovsx:
-    desc: Publish to Open VSX (for Cursor/VSCodium users; needs `OVSX_PAT`)
+    desc: Publish to Open VSX for Cursor/VSCodium users (uses OVSX_PAT from .env)
     dir: '{{.TASKFILE_DIR}}'
     cmds:
+      - task: package
+      - pnpm dlx ovsx create-namespace khanakia -p "$OVSX_PAT" || true
       - pnpm dlx ovsx publish "{{.VSIX}}" -p "$OVSX_PAT"
 
   reinstall:
@@ -69,8 +86,8 @@ tasks:
   uninstall:
     desc: Remove the extension from VS Code + Cursor
     cmds:
-      - code --uninstall-extension khanakia.code-feedback || true
-      - cursor --uninstall-extension khanakia.code-feedback || true
+      - code --uninstall-extension khanakia.code-feedback-notes || true
+      - cursor --uninstall-extension khanakia.code-feedback-notes || true
 
   status:
     desc: Show whether the extension is installed in each editor

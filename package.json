@@ -1,5 +1,5 @@
 {
-  "name": "code-feedback",
+  "name": "code-feedback-notes",
   "displayName": "Code Feedback",
   "description": "Select lines, add a feedback note with #tags, track Open/Resolved, filter live, and copy the open notes as one markdown list to paste into any AI agent.",
   "version": "0.1.0",
