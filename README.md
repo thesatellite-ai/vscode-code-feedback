@@ -12,7 +12,7 @@
 [![Open VSX Downloads](https://img.shields.io/open-vsx/dt/khanakia/code-feedback-notes?label=OVSX%20downloads)](https://open-vsx.org/extension/khanakia/code-feedback-notes)
 [![CI](https://github.com/thesatellite-ai/vscode-code-feedback/actions/workflows/ci.yml/badge.svg)](https://github.com/thesatellite-ai/vscode-code-feedback/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/tag/thesatellite-ai/vscode-code-feedback?sort=semver&label=release)](https://github.com/thesatellite-ai/vscode-code-feedback/tags)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![VS Code](https://img.shields.io/badge/VS%20Code-%5E1.75-007ACC?logo=visualstudiocode&logoColor=white)
 ![Cursor](https://img.shields.io/badge/Cursor-compatible-000?logo=cursor&logoColor=white)
@@ -204,4 +204,4 @@ Then reload your editor windows. A `Taskfile.yml` wraps these as `task deps`, `t
 
 ## License
 
-[MIT](LICENSE) © khanakia
+[Apache 2.0](LICENSE) © khanakia

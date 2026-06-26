@@ -38,4 +38,4 @@ Open an issue at https://github.com/thesatellite-ai/vscode-code-feedback/issues 
 
 ## License
 
-By contributing, you agree that your contributions are licensed under the [MIT License](LICENSE).
+By contributing, you agree that your contributions are licensed under the [Apache License 2.0](LICENSE).

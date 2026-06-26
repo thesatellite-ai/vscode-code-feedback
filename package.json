@@ -4,7 +4,7 @@
   "description": "Select lines, add a feedback note with #tags, track Open/Resolved, filter live, and copy the open notes as one markdown list to paste into any AI agent.",
   "version": "0.1.0",
   "publisher": "khanakia",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "icon": "brand/png/cf-icon-512.png",
   "engines": { "vscode": "^1.75.0" },
   "categories": ["Other", "Visualization"],
