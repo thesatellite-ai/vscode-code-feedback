@@ -2,10 +2,12 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run Claude Notes Extension",
+      "name": "Run Code Feedback Extension",
       "type": "extensionHost",
       "request": "launch",
-      "args": ["--extensionDevelopmentPath=${workspaceFolder}"]
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
+      "preLaunchTask": "npm: compile"
     }
   ]
 }

@@ -10,15 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      # No build step — syntax-check the source and verify it packages cleanly.
-      # For a no-dependency extension, a successful `vsce package` is the test.
-      - name: Syntax check
-        run: node --check extension.js
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm run lint
+      # Type-check + emit. A clean strict-TS compile is the gate.
+      - name: Compile
+        run: pnpm run compile
       - name: Package
-        run: npx --yes @vscode/vsce package --allow-missing-repository --skip-license
+        run: pnpm dlx @vscode/vsce package --no-dependencies --allow-missing-repository --skip-license
       - name: Upload VSIX
         uses: actions/upload-artifact@v4
         with:

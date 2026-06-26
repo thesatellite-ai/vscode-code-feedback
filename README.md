@@ -73,17 +73,18 @@ Rebind under **Preferences → Keyboard Shortcuts** (search "Code Feedback"). Al
 
 **From the Marketplace** (once published): search **Code Feedback** in the Extensions view and install. Works in VS Code, Cursor, and other VS Code-compatible editors.
 
-**From source** (no build step — plain JavaScript):
+**From source** (TypeScript; compiles with `tsc`, no runtime dependencies):
 
 ```bash
 git clone https://github.com/thesatellite-ai/vscode-code-feedback.git
 cd vscode-code-feedback
-npx --yes @vscode/vsce package --allow-missing-repository --skip-license
+pnpm install                                                  # toolchain (TypeScript + oxlint), dev only
+pnpm dlx @vscode/vsce package --no-dependencies --allow-missing-repository --skip-license   # compiles via vscode:prepublish
 code   --install-extension code-feedback-0.1.0.vsix --force
 cursor --install-extension code-feedback-0.1.0.vsix --force   # optional, for Cursor
 ```
 
-Then reload your editor windows. A `Taskfile.yml` wraps these as `task reinstall`, `task status`, and `task uninstall` if you have [Task](https://taskfile.dev/) installed.
+Then reload your editor windows. A `Taskfile.yml` wraps these as `task deps`, `task build`, `task reinstall`, `task status`, and `task uninstall` if you have [Task](https://taskfile.dev/) installed.
 
 ## Storage & privacy
 

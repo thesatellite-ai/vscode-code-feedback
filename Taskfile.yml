@@ -11,23 +11,51 @@ vars:
   VSIX: code-feedback-0.1.0.vsix
 
 tasks:
-  package:
-    desc: Build the .vsix from source
+  deps:
+    desc: Install the toolchain (TypeScript + oxlint) via pnpm
     dir: '{{.TASKFILE_DIR}}'
     cmds:
-      - npx --yes @vscode/vsce package --allow-missing-repository --skip-license
+      - pnpm install
+
+  lint:
+    desc: Lint src with oxlint
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - pnpm run lint
+
+  build:
+    desc: Lint + compile src/*.ts → out/extension.js
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - pnpm run lint
+      - pnpm run compile
+
+  watch:
+    desc: Recompile on change (tsc --watch)
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - pnpm run watch
+
+  package:
+    # --no-dependencies: vsce can't walk pnpm's symlinked node_modules, and we
+    # ship zero runtime deps, so skip its dependency check. Compile runs via
+    # the vscode:prepublish script (direct `tsc`).
+    desc: Compile and build the .vsix
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - pnpm dlx @vscode/vsce package --no-dependencies --allow-missing-repository --skip-license
 
   publish:
-    desc: Publish to the VS Code Marketplace (needs a publisher PAT; run `npx vsce login khanakia` first)
+    desc: Publish to the VS Code Marketplace (needs a publisher PAT; run `pnpm dlx @vscode/vsce login khanakia` first)
     dir: '{{.TASKFILE_DIR}}'
     cmds:
-      - npx --yes @vscode/vsce publish
+      - pnpm dlx @vscode/vsce publish --no-dependencies
 
   publish-ovsx:
     desc: Publish to Open VSX (for Cursor/VSCodium users; needs `OVSX_PAT`)
     dir: '{{.TASKFILE_DIR}}'
     cmds:
-      - npx --yes ovsx publish "{{.VSIX}}" -p "$OVSX_PAT"
+      - pnpm dlx ovsx publish "{{.VSIX}}" -p "$OVSX_PAT"
 
   reinstall:
     desc: Repackage and reinstall into VS Code + Cursor (run after editing the code)

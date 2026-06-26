@@ -14,7 +14,20 @@
   "bugs": { "url": "https://github.com/thesatellite-ai/vscode-code-feedback/issues" },
   "homepage": "https://github.com/thesatellite-ai/vscode-code-feedback#readme",
   "activationEvents": ["onStartupFinished"],
-  "main": "./extension.js",
+  "main": "./out/extension.js",
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "oxlint src",
+    "vscode:prepublish": "tsc -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.75.0",
+    "oxlint": "^0.9.0",
+    "typescript": "^5.4.0"
+  },
   "contributes": {
     "commands": [
       { "command": "codeFeedback.addNote", "title": "Code Feedback: Add Note from Selection", "icon": "$(add)" },

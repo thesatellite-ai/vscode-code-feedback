@@ -1,29 +1,35 @@
 # Contributing to Code Feedback
 
-Thanks for your interest in improving Code Feedback. This is a small, zero-dependency extension — there's no build step, which keeps the contribution loop fast.
+Thanks for your interest in improving Code Feedback. It's a small TypeScript extension with no runtime dependencies — `tsc` compiles `src/extension.ts` to `out/extension.js`, and the only things required at runtime are the host-provided `vscode` API and Node's `fs`/`path`. Package manager: **pnpm**.
 
 ## Project layout
 
-- `extension.js` — the entire extension: storage, commands, editor decorations, and the webview sidebar (HTML/CSS/JS is inlined in `getHtml`).
-- `package.json` — the manifest: commands, menus, keybindings, and the webview view contribution.
-- `Taskfile.yml` — reusable dev commands (package, install, publish). Requires [Task](https://taskfile.dev/); each command is also runnable by hand.
-
-There is no `node_modules` and no compile step — the extension is plain CommonJS using only the `vscode` API and Node's `fs`/`path`.
+- `src/extension.ts` — the entire extension: types, storage, commands, editor decorations, and the webview sidebar (HTML/CSS/JS is inlined in `getHtml`).
+- `out/extension.js` — compiled output (git-ignored; built by `tsc`).
+- `tsconfig.json` — strict TypeScript config (`strict`, `noUnusedLocals/Parameters`, etc.).
+- `package.json` — the manifest (commands, menus, keybindings, webview view) plus `scripts` (`compile`/`watch`/`vscode:prepublish`) and the dev-only `devDependencies` (`typescript`, `@types/vscode`, `@types/node`).
+- `Taskfile.yml` — reusable dev commands (deps, build, watch, package, install, publish). Requires [Task](https://taskfile.dev/); each command is also runnable by hand.
 
 ## Running it locally
 
-Two options:
+```bash
+pnpm install    # or: task deps — installs the toolchain (TypeScript + oxlint)
+```
 
-1. **Dev host:** open this folder in VS Code and press `F5`. A second "Extension Development Host" window launches with the extension active. Edit code, then reload that window to apply.
-2. **Install the built extension:** `task reinstall` (or run the steps in the README's Install section), then reload your editor windows.
+Then either:
+
+1. **Dev host:** open this folder in VS Code and press `F5` (it runs `npm: compile` first via the preLaunch task in `.vscode/launch.json`, then opens an Extension Development Host). Edit, recompile (`task watch` keeps it live), reload the window.
+2. **Install the built extension:** `task reinstall`, then reload your editor windows.
 
 ## Making changes
 
-- Keep it dependency-free. If a change seems to need a package, open an issue first to discuss.
+- Stay dependency-free at runtime. Dev dependencies (types, tsc) are fine; a runtime dependency needs discussion first — open an issue.
+- Full type safety: no `any`, no `as any`, no `@ts-ignore`. Values crossing a boundary (the JSON store, webview messages) are validated before use (`toNote`, the guard in `onMessage`).
 - The webview UI lives inside `getHtml`. Escape any user-provided text with the `esc` helper before inserting it into HTML — notes can contain arbitrary characters.
 - Validate before opening a PR:
-  - `node --check extension.js`
-  - `npx --yes @vscode/vsce package --allow-missing-repository --skip-license` (the package step is the real test for a no-build extension — it must produce a `.vsix` without errors).
+  - `pnpm run lint` (or `task lint`) — oxlint, must be clean.
+  - `pnpm run compile` (or `task build`, which lints then compiles) — a clean strict-TS compile is the gate.
+  - `pnpm dlx @vscode/vsce package --no-dependencies --allow-missing-repository --skip-license` — must produce a `.vsix` without errors.
 - Update `CHANGELOG.md` under an `Unreleased` heading describing your change.
 
 ## Reporting bugs / requesting features

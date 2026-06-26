@@ -4,10 +4,16 @@
 .gitignore
 .DS_Store
 **/.DS_Store
+src/**
+node_modules/**
+tsconfig.json
+.oxlintrc.json
+pnpm-lock.yaml
+out/**/*.map
 Taskfile.yml
 CONTRIBUTING.md
+PUBLISHING.md
 icon.svg
-_gethtml.js
 CLAUDE.md
 docsi
 docsi/**
